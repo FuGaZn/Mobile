@@ -2,6 +2,10 @@ package com.mobile.domain;
 
 import java.math.BigDecimal;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public class Order {
     int oid;
     int pid;

@@ -4,15 +4,50 @@ import com.mobile.domain.User;
 
 public interface UserDao {
 
+    /**
+     * 计算打电话的费用
+     *
+     * @param uid
+     * @param timelen
+     */
     public void call(int uid, int timelen);
 
+    /**
+     * 计算发短信的费用
+     *
+     * @param uid
+     */
     public void sendMsg(int uid);
 
-    public void useFlow(int uid, int nums,String location);
+    /**
+     * 计算使用流量的费用
+     *
+     * @param uid
+     * @param nums
+     * @param location
+     */
+    public void useFlow(int uid, int nums, String location);
 
+    /**
+     * 判断是否还有余额
+     *
+     * @param uid
+     * @return
+     */
     public boolean hasBalance(int uid);
 
+    /**
+     * 更新客户信息
+     *
+     * @param user
+     */
     public void update(User user);
 
+    /**
+     * 返回客户信息
+     *
+     * @param uid
+     * @return
+     */
     public User get(int uid);
 }

@@ -3,6 +3,10 @@ package com.mobile.domain;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public class User {
     private int uid;
     private String uname;

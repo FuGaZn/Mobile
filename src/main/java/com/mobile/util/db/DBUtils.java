@@ -7,6 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ResourceBundle;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public class DBUtils {
 
     //数据库连接地址
@@ -20,7 +24,8 @@ public class DBUtils {
 
     private static ResourceBundle rb = ResourceBundle.getBundle("com.mobile.util.db.db-config");
 
-    private DBUtils(){}
+    private DBUtils() {
+    }
 
     //使用静态块加载驱动程序
     static {

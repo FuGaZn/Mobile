@@ -1,12 +1,14 @@
 package com.mobile.domain;
 
+import com.mobile.util.TimeLen;
+
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * date:2018/10/26
- * author: fujiaxing 161250025
+ * author: fu jia xing 161250025
  * 套餐包
  */
 public class Package {
@@ -16,17 +18,16 @@ public class Package {
     private int call_nums;
     private int flow_nums;
     private double pay;
-    private String start;
-    private String end;
     private boolean valid;
     double call_over_price;
     double msg_over_price;
     double flow_over_price;
-    String location="";
+    TimeLen timeLen;
+    String location = "";
 
-    public Package(int pid, String pname, int message_nums, int call_nums, int flow_nums, double pay, String start, String end, boolean valid,
-                   double cop, double mop, double fop,String location) {
-        this.location=location;
+    public Package(int pid, String pname, int message_nums, int call_nums, int flow_nums, double pay, boolean valid,
+                   double cop, double mop, double fop, String location,String timelen) {
+        this.location = location;
         this.call_over_price = cop;
         this.msg_over_price = mop;
         this.flow_over_price = fop;
@@ -36,9 +37,8 @@ public class Package {
         this.call_nums = call_nums;
         this.flow_nums = flow_nums;
         this.pay = pay;
-        this.start = start;
-        this.end = end;
         this.valid = valid;
+        this.timeLen = new TimeLen(timelen);
     }
 
     public int getPid() {
@@ -53,13 +53,6 @@ public class Package {
         return pname;
     }
 
-    public String getStart() {
-        return start;
-    }
-
-    public String getEnd() {
-        return end;
-    }
 
     public double getPay() {
         return pay;
@@ -120,7 +113,11 @@ public class Package {
             res.append("流量总数：" + this.flowToString() + "  ");
         }
         //  SimpleDateFormat format = new SimpleDateFormat("yy-MM-dd");
-        res.append("开始时间：" + (start) + "  结束时间：" + (end));
+        res.append("套餐时限：" + timeLen.readFormat());
         return res.toString();
+    }
+
+    public TimeLen getTimeLen() {
+        return timeLen;
     }
 }

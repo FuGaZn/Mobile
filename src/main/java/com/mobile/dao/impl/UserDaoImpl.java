@@ -12,9 +12,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public class UserDaoImpl implements UserDao {
     @Override
     public User get(int uid) {
