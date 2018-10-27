@@ -4,6 +4,7 @@ import com.mobile.dao.OrderDao;
 import com.mobile.dao.UserDao;
 import com.mobile.domain.Order;
 import com.mobile.domain.User;
+import com.mobile.util.Bill;
 import com.mobile.util.db.DBUtils;
 
 import java.sql.Connection;
@@ -17,6 +18,21 @@ import java.util.List;
  * author: fu jia xing  161250025
  */
 public class UserDaoImpl implements UserDao {
+
+    @Override
+    public Bill monthBill(int uid, int month) {
+        UserDao userDao = new UserDaoImpl();
+        OrderDao orderDao = new OrderDaoImpl();
+        User user = userDao.get(uid);
+        List<Order> orders = orderDao.myMonthOrders(uid, month);
+        double sum = 0;
+        for (Order order: orders){
+            sum += order.getPay();
+        }
+        Bill bill = new Bill(uid, user.getName(), orders, sum, user.getBalance());
+        return bill;
+    }
+
     @Override
     public User get(int uid) {
         Connection con = null;

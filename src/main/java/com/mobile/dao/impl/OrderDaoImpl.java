@@ -26,8 +26,37 @@ import java.util.List;
 public class OrderDaoImpl implements OrderDao {
 
     @Override
-    public List<Order> myMonthOrders(int uid,int month) {
+    public List<Order> myMonthOrders(int uid, int month) {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        calendar.set(Calendar.MONTH, month);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        String start = format.format(calendar.getTime());
+        calendar.set(Calendar.MONTH, month + 1);
+        String end = format.format(calendar.getTime());
 
+        String sql = "select * from orders where uid=? and ((startTime<=? and endTime>=?) or (startTime>=? and endTime<=?));";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            conn = DBUtils.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, uid);
+            ps.setString(2, start);
+            ps.setString(3, end);
+            ps.setString(4, start);
+            ps.setString(5, end);
+            rs = ps.executeQuery();
+            List<Order> orders = new ArrayList<>();
+            while (rs.next()) {
+                orders.add(new Order(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getString(4), rs.getInt(5), rs.getInt(6), rs.getInt(7), rs.getString(8), rs.getString(9), rs.getDouble(10), rs.getBoolean(11),
+                        rs.getDouble(12), rs.getDouble(13), rs.getDouble(14), rs.getString(15), rs.getBoolean(16)));
+            }
+            return orders;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -35,7 +64,7 @@ public class OrderDaoImpl implements OrderDao {
     public List<Order> myOrders(int uid) {
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
-        if(user == null){
+        if (user == null) {
             System.out.println("用户不存在。");
             return null;
         }
@@ -81,15 +110,15 @@ public class OrderDaoImpl implements OrderDao {
                 TimeLen timelen = p.getTimeLen();
                 double pay = p.getPay();
                 User user = userDao.get(uid);
-                if(user == null){
+                if (user == null) {
                     System.out.println("用户不存在。");
                     return;
                 }
-                if(user.getBalance()<pay){
+                if (user.getBalance() < pay) {
                     System.out.println("余额不足，暂时不能订购本套餐。请尽快充值");
                     return;
-                }else{
-                    user.setBalance(user.getBalance()-pay);
+                } else {
+                    user.setBalance(user.getBalance() - pay);
                     userDao.update(user);
                 }
 
@@ -155,7 +184,7 @@ public class OrderDaoImpl implements OrderDao {
     public void subscribeNextMonth(int pid, int uid) {
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
-        if(user == null){
+        if (user == null) {
             System.out.println("用户不存在。");
             return;
         }
