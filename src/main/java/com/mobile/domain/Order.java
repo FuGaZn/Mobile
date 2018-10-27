@@ -22,10 +22,11 @@ public class Order {
     double msg_over_price;
     double flow_over_price;
     String location;
+    boolean next_month;
 
     public Order(int oid, int pid, int uid, String pname, int m, int c, int f, String st, String end, double pay, boolean valid,
-                 double cop, double mop, double fop,String l) {
-        this.location=l;
+                 double cop, double mop, double fop,String location,boolean next_month) {
+        this.location=location;
         this.call_over_price = cop;
         this.msg_over_price = mop;
         this.flow_over_price = fop;
@@ -39,6 +40,24 @@ public class Order {
         this.start = st;
         this.end = end;
         this.valid = valid;
+        this.next_month = next_month;
+        this.pay = pay;
+    }
+
+    public boolean isNextMonthValid() {
+        return next_month;
+    }
+
+    public int getUid() {
+        return uid;
+    }
+
+    public double getPay() {
+        return pay;
+    }
+
+    public String getPname() {
+        return pname;
     }
 
     public String getLocation() {
@@ -65,7 +84,7 @@ public class Order {
         else
             res.append("【已失效】 ");
         res.append("套餐编号：" + this.pid + "  ");
-        res.append("套餐类型：" + this.pname + "  月服务费：" + this.pay + "  ");
+        res.append("套餐类型：" + this.pname + "  月功能费：" + this.pay + "  ");
         if (this.message_nums != 0) {
             res.append("剩余短信条数：" + this.message_nums + "条  ");
         }

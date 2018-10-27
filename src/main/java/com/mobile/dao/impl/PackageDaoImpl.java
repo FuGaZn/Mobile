@@ -58,7 +58,7 @@ public class PackageDaoImpl implements PackageDao {
             rs = ps.executeQuery();
             while (rs.next()){
                 packages.add(new Package(rs.getInt(1),rs.getString(2),rs.getInt(3),rs.getInt(4),rs.getInt(5),rs.getDouble(6),rs.getBoolean(7),
-                        rs.getDouble(8),rs.getDouble(9),rs.getDouble(10),rs.getString(11),rs.getString(12)));
+                        rs.getDouble(8),rs.getDouble(9),rs.getDouble(10),rs.getString(11),rs.getString(12),rs.getBoolean(13)));
             }
         }catch (SQLException e){
             e.printStackTrace();

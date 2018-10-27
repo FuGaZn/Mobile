@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args){
+    public static void main(String[] args) {
       /*  Package p = new Package(1,"短信套餐",200,0,0,10,"2018-11-01","2018-11-30",true);
         PackageDao packageDao = new PackageDaoImpl();
         try {
@@ -27,7 +27,7 @@ public class Main {
         */
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        calendar.set(Calendar.YEAR,Integer.parseInt(format.format(calendar.getTime()).split("-")[0])+1);;
-        System.out.println(format.format(calendar.getTime()));
+        calendar.set(Calendar.YEAR, Integer.parseInt(format.format(calendar.getTime()).split("-")[0]) + 1);
+        System.out.println(calendar.getActualMaximum(Calendar.DAY_OF_MONTH) - calendar.get(Calendar.DAY_OF_MONTH));
     }
 }

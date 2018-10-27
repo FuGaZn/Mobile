@@ -5,9 +5,7 @@ import com.mobile.dao.UserDao;
 import com.mobile.domain.Order;
 import com.mobile.domain.User;
 import com.mobile.util.db.DBUtils;
-import com.sun.org.apache.xpath.internal.operations.Or;
 
-import javax.jws.soap.SOAPBinding;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,6 +19,21 @@ import java.util.List;
 public class UserDaoImpl implements UserDao {
     @Override
     public User get(int uid) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String sql = "select * from users where uid=?;";
+        try {
+            con = DBUtils.getConnection();
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery();
+            if(rs.next()) {
+                User user = new User(rs.getInt(1),rs.getString(2),rs.getDouble(3),rs.getString(4),rs.getString(5));
+                return user;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -66,7 +79,7 @@ public class UserDaoImpl implements UserDao {
         List<Order> orders = orderDao.myOrders(uid);
 
         for (Order order : orders) {
-            if (order.getCall_nums() > 0 && timelen > 0) {
+            if (order.isValid() && order.getCall_nums() > 0 && timelen > 0) {
                 int a = order.getCall_nums() > timelen ? timelen : order.getCall_nums();
                 order.setCall_nums(order.getCall_nums() - a);
                 timelen -= a;
@@ -78,7 +91,7 @@ public class UserDaoImpl implements UserDao {
             double price = 0.5;
             User user = userDao.get(uid);
             for (Order order:orders){
-                if(order.getCall_over_price()>0){
+                if(order.isValid() && order.getCall_over_price()>0){
                     price = order.getCall_over_price();
                 }
             }
@@ -97,7 +110,7 @@ public class UserDaoImpl implements UserDao {
 
         boolean b = false;
         for (Order order : orders) {
-            if (order.getMessage_nums() > 0) {
+            if (order.isValid() && order.getMessage_nums() > 0) {
                 order.setMessage_nums(order.getMessage_nums()-1);
                 orderDao.update(order);
                 b=true;
@@ -109,7 +122,7 @@ public class UserDaoImpl implements UserDao {
             double price = 0.1;
             User user = userDao.get(uid);
             for (Order order:orders){
-                if (order.getMsg_over_price()>0)
+                if (order.isValid() && order.getMsg_over_price()>0)
                     price = order.getMsg_over_price();
 
             }
@@ -127,7 +140,7 @@ public class UserDaoImpl implements UserDao {
         List<Order> orders = orderDao.myOrders(uid);
 
         for (Order order : orders) {
-            if ((order.getLocation()==null||order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
+            if (order.isValid() && (order.getLocation()==null||order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
                 int a = order.getFlow_nums() > nums ? nums : order.getCall_nums();
                 order.setCall_nums(order.getCall_nums() - a);
                 nums -= a;
@@ -140,7 +153,7 @@ public class UserDaoImpl implements UserDao {
             boolean b = false;
             User user = userDao.get(uid);
             for (Order order:orders){
-                if(order.getLocation()==null||order.getLocation().equals(location)){
+                if(order.isValid() && (order.getLocation()==null||order.getLocation().equals(location))){
                     price = Math.min(order.getFlow_over_price(),price);
                     b = true;
                 }

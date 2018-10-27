@@ -1,6 +1,9 @@
 package com.mobile.dao;
 
+import com.mobile.domain.Order;
 import com.mobile.domain.User;
+
+import java.util.List;
 
 public interface UserDao {
 
@@ -50,4 +53,6 @@ public interface UserDao {
      * @return
      */
     public User get(int uid);
+
+
 }

@@ -24,9 +24,10 @@ public class Package {
     double flow_over_price;
     TimeLen timeLen;
     String location = "";
+    boolean next_month;
 
     public Package(int pid, String pname, int message_nums, int call_nums, int flow_nums, double pay, boolean valid,
-                   double cop, double mop, double fop, String location,String timelen) {
+                   double cop, double mop, double fop, String location,String timelen,boolean next) {
         this.location = location;
         this.call_over_price = cop;
         this.msg_over_price = mop;
@@ -39,10 +40,15 @@ public class Package {
         this.pay = pay;
         this.valid = valid;
         this.timeLen = new TimeLen(timelen);
+        this.next_month = next;
     }
 
     public int getPid() {
         return pid;
+    }
+
+    public boolean isNextMonthValid() {
+        return next_month;
     }
 
     public String getLocation() {
@@ -102,7 +108,7 @@ public class Package {
     public String toString() {
         StringBuilder res = new StringBuilder("");
         res.append("套餐编号：" + this.pid + "  ");
-        res.append("套餐类型：" + this.pname + "  月服务费：" + this.pay + "  ");
+        res.append("套餐类型：" + this.pname + "  月功能费：" + this.pay + "  ");
         if (this.message_nums != 0) {
             res.append("短信条数：" + this.message_nums + "条  ");
         }

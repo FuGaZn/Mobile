@@ -1,6 +1,7 @@
 package com.mobile.dao;
 
 import com.mobile.domain.Order;
+import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.util.List;
 
@@ -23,6 +24,13 @@ public interface OrderDao {
      * @return
      */
     public List<Order> myOrders(int uid);
+
+    /**
+     * 查询一个客户某一个月所有套餐
+     * @param uid
+     * @return
+     */
+    public List<Order> myMonthOrders(int uid,int month);
 
     /**
      * 立即退订套餐
