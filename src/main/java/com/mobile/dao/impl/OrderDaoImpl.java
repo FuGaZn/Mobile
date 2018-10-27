@@ -65,7 +65,6 @@ public class OrderDaoImpl implements OrderDao {
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
         if (user == null) {
-            System.out.println("用户不存在。");
             return null;
         }
         Connection conn = null;

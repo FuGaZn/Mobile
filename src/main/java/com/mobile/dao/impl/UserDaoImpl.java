@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,16 +21,56 @@ import java.util.List;
 public class UserDaoImpl implements UserDao {
 
     @Override
+    public List<User> getUserByName(String name) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String sql = "select * from users where uname=?;";
+        List<User> users = new ArrayList<>();
+        try {
+            conn = DBUtils.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, name);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6)));
+            }
+            return users;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<User> showAll() {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String sql = "select * from users;";
+        List<User> users = new ArrayList<>();
+        try {
+            conn = DBUtils.getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6)));
+            }
+            return users;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public Bill monthBill(int uid, int month) {
         UserDao userDao = new UserDaoImpl();
         OrderDao orderDao = new OrderDaoImpl();
         User user = userDao.get(uid);
         List<Order> orders = orderDao.myMonthOrders(uid, month);
-        double sum = 0;
-        for (Order order: orders){
-            sum += order.getPay();
-        }
-        Bill bill = new Bill(uid, user.getName(), orders, sum, user.getBalance());
+
+        Bill bill = new Bill(uid, user.getName(), orders, user.getBalance(), user.getBalance());
         return bill;
     }
 
@@ -42,12 +83,13 @@ public class UserDaoImpl implements UserDao {
         try {
             con = DBUtils.getConnection();
             ps = con.prepareStatement(sql);
+            ps.setInt(1,uid);
             rs = ps.executeQuery();
-            if(rs.next()) {
-                User user = new User(rs.getInt(1),rs.getString(2),rs.getDouble(3),rs.getString(4),rs.getString(5));
+            if (rs.next()) {
+                User user = new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6));
                 return user;
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
@@ -59,17 +101,17 @@ public class UserDaoImpl implements UserDao {
         Connection conn = null;
         PreparedStatement ps = null;
         String sql = "insert into users(uid,uname,balance,location,phone) values(?,?,?,?,?)";
-        try{
+        try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setInt(1,user.getId());
-            ps.setString(2,user.getName());
-            ps.setDouble(3,user.getBalance());
+            ps.setInt(1, user.getId());
+            ps.setString(2, user.getName());
+            ps.setDouble(3, user.getBalance());
             ps.setString(4, user.getLocation());
-            ps.setString(5,user.getPhone());
+            ps.setString(5, user.getPhone());
             ps.executeUpdate();
             System.out.println("注册成功。");
-        }catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return true;
@@ -79,11 +121,14 @@ public class UserDaoImpl implements UserDao {
     public void update(User user) {
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "update users set balance="+user.getBalance();
-        try{
+        String sql = "update users set balance=? and expense=?;";
+        try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
-        }catch (SQLException e){
+            ps.setDouble(1,user.getBalance());
+            ps.setDouble(2,user.getExpense());
+            ps.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -128,12 +173,13 @@ public class UserDaoImpl implements UserDao {
         if (timelen > 0) {
             double price = 0.5;
             User user = userDao.get(uid);
-            for (Order order:orders){
-                if(order.isValid() && order.getCall_over_price()>0){
+            for (Order order : orders) {
+                if (order.isValid() && order.getCall_over_price() > 0) {
                     price = order.getCall_over_price();
                 }
             }
             user.setBalance(user.getBalance() - timelen * price);
+            user.setExpense(user.getExpense() + timelen * price);
             userDao.update(user);
             if (user.getBalance() < 0) {
                 System.out.println("您已欠费，保留接听业务。请尽快充值。");
@@ -149,22 +195,23 @@ public class UserDaoImpl implements UserDao {
         boolean b = false;
         for (Order order : orders) {
             if (order.isValid() && order.getMessage_nums() > 0) {
-                order.setMessage_nums(order.getMessage_nums()-1);
+                order.setMessage_nums(order.getMessage_nums() - 1);
                 orderDao.update(order);
-                b=true;
+                b = true;
                 break;
             }
         }
         UserDao userDao = new UserDaoImpl();
-        if (b==false) {
+        if (b == false) {
             double price = 0.1;
             User user = userDao.get(uid);
-            for (Order order:orders){
-                if (order.isValid() && order.getMsg_over_price()>0)
+            for (Order order : orders) {
+                if (order.isValid() && order.getMsg_over_price() > 0)
                     price = order.getMsg_over_price();
 
             }
             user.setBalance(user.getBalance() - price);
+            user.setExpense(user.getExpense() + price);
             userDao.update(user);
             if (user.getBalance() < 0) {
                 System.out.println("您已欠费，保留接听业务。请尽快充值。");
@@ -173,12 +220,12 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void useFlow(int uid, int nums,String location) {
+    public void useFlow(int uid, int nums, String location) {
         OrderDao orderDao = new OrderDaoImpl();
         List<Order> orders = orderDao.myOrders(uid);
 
         for (Order order : orders) {
-            if (order.isValid() && (order.getLocation()==null||order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
+            if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
                 int a = order.getFlow_nums() > nums ? nums : order.getCall_nums();
                 order.setCall_nums(order.getCall_nums() - a);
                 nums -= a;
@@ -190,18 +237,19 @@ public class UserDaoImpl implements UserDao {
             double price = 5;   //国内流量价格
             boolean b = false;
             User user = userDao.get(uid);
-            for (Order order:orders){
-                if(order.isValid() && (order.getLocation()==null||order.getLocation().equals(location))){
-                    price = Math.min(order.getFlow_over_price(),price);
+            for (Order order : orders) {
+                if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location))) {
+                    price = Math.min(order.getFlow_over_price(), price);
                     b = true;
                 }
             }
-            if(b == false){
-                if(user.getLocation().equals(location)){
+            if (b == false) {
+                if (user.getLocation().equals(location)) {
                     price = 3;  //本地流量价格
                 }
             }
-            user.setBalance(user.getBalance() - nums/1024 * price);
+            user.setBalance(user.getBalance() - nums / 1024 * price);
+            user.setExpense(user.getExpense() + nums / 1024 * price);
             userDao.update(user);
             if (user.getBalance() < 0) {
                 System.out.println("您已欠费，保留接听业务。请尽快充值。");

@@ -11,15 +11,25 @@ public class User {
     private int uid;
     private String uname;
     private double balance;
+    private double expense;
     private String location;
     private String phone;
 
-    public User(int i, String n, double balance,String location,String phone) {
+    public User(int i, String n, double balance,String location,String phone,double expense) {
         this.uid = i;
         this.uname = n;
         this.balance=balance;
         this.location=location;
         this.phone=phone;
+        this.expense = expense;
+    }
+
+    public void setExpense(double expense) {
+        this.expense = expense;
+    }
+
+    public double getExpense() {
+        return expense;
     }
 
     public double getBalance() {

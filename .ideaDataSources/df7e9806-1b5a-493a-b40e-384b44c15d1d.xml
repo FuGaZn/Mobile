@@ -1125,7 +1125,7 @@
     </column>
     <column id="273" parent="235" name="balance">
       <Position>3</Position>
-      <DataType>int(11)|0</DataType>
+      <DataType>double|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
     <column id="274" parent="235" name="location">
@@ -1138,16 +1138,21 @@
       <DataType>varchar(60)|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <index id="276" parent="235" name="users_uid_uindex">
+    <column id="276" parent="235" name="expense">
+      <Position>6</Position>
+      <DataType>double|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <index id="277" parent="235" name="users_uid_uindex">
       <ColNames>uid</ColNames>
       <Unique>1</Unique>
     </index>
-    <key id="277" parent="235" name="PRIMARY">
+    <key id="278" parent="235" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>uid</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="278" parent="235" name="users_uid_uindex">
+    <key id="279" parent="235" name="users_uid_uindex">
       <ColNames>uid</ColNames>
       <UnderlyingIndexName>users_uid_uindex</UnderlyingIndexName>
     </key>

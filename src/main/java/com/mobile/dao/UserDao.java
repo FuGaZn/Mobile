@@ -8,6 +8,20 @@ import java.util.List;
 
 public interface UserDao {
 
+    /**
+     * 展示所有用户信息
+     *
+     * @return
+     */
+    public List<User> showAll();
+
+    /**
+     * 通过姓名获取用户（可能会有重名）
+     *
+     * @param name
+     * @return
+     */
+    public List<User> getUserByName(String name);
 
     /**
      * 计算打电话的费用
@@ -58,6 +72,7 @@ public interface UserDao {
 
     /**
      * 新增客户
+     *
      * @param user
      * @return
      */

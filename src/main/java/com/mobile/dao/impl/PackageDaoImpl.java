@@ -40,8 +40,6 @@ public class PackageDaoImpl implements PackageDao {
             System.out.println("套餐创建成功。");
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            DBUtils.close(null, ps, conn);
         }
     }
 
@@ -63,8 +61,6 @@ public class PackageDaoImpl implements PackageDao {
             }
         }catch (SQLException e){
             e.printStackTrace();
-        }finally {
-            DBUtils.close(rs,ps,conn);
         }
         return packages;
     }

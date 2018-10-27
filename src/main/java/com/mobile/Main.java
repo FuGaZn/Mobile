@@ -1,12 +1,17 @@
 package com.mobile;
 
+import com.mobile.dao.OrderDao;
 import com.mobile.dao.PackageDao;
 import com.mobile.dao.UserDao;
+import com.mobile.dao.impl.OrderDaoImpl;
 import com.mobile.dao.impl.PackageDaoImpl;
 import com.mobile.dao.impl.UserDaoImpl;
+import com.mobile.domain.Order;
 import com.mobile.domain.Package;
 import com.mobile.domain.User;
+import com.mobile.util.Bill;
 import com.mobile.util.TimeLen;
+import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -63,6 +68,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "show":
+                    main.show(orderline);
                     break;
 
                 /**-----------------------------------------------
@@ -154,7 +160,7 @@ public class Main {
     private void register(String name, double balance, String location, String phone) {
         long time1 = System.currentTimeMillis();
 
-        User user = new User(0, name, balance, location, phone);
+        User user = new User(0, name, balance, location, phone,0);
         UserDao userDao = new UserDaoImpl();
         userDao.add(user);
 
@@ -195,12 +201,169 @@ public class Main {
         System.out.println("Time: " + df.format(timelen) + "s");
     }
 
-    private void showMonthBill(int uid, int month){
+    /**
+     * 生成月账单
+     *
+     * @param uid
+     * @param month
+     */
+    private void showMonthBill(int uid, int month) {
+        double time1 = System.currentTimeMillis();
 
+        UserDao userDao = new UserDaoImpl();
+        Bill bill = userDao.monthBill(uid, month);
+        if(bill == null){
+            System.out.println("该用户尚未订购任何套餐。");
+        }
+        System.out.println(bill.toString());
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
     }
 
-    private void show(String orderline){
+    /**
+     * 展示所有用户的信息
+     */
+    private void showAllUsers() {
+        double time1 = System.currentTimeMillis();
 
+        UserDao userDao = new UserDaoImpl();
+        List<User> users = userDao.showAll();
+        for (User user : users) {
+            System.out.println(user.toString());
+        }
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 展示所有套餐的信息
+     */
+    private void showAllPackages() {
+        double time1 = System.currentTimeMillis();
+
+        PackageDao packageDao = new PackageDaoImpl();
+        try {
+            List<Package> packages = packageDao.showAll();
+            for (Package p : packages) {
+                System.out.println(p.toString());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 通过客户编号查询其所有已订购套餐
+     *
+     * @param uid
+     */
+    private void showMyPackages(int uid) {
+        double time1 = System.currentTimeMillis();
+
+        UserDao userDao = new UserDaoImpl();
+        User user = userDao.get(uid);
+        if (user == null){
+            System.out.println("用户不存在。");
+            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            DecimalFormat df = new DecimalFormat("0.000");
+            System.out.println("Time: " + df.format(timelen) + "s");
+            return;
+        }
+        OrderDao orderDao = new OrderDaoImpl();
+        List<Order> orders = orderDao.myOrders(uid);
+        if(orders == null || orders.size() == 0) {
+            System.out.println("此用户尚未订购任何套餐。");
+            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            DecimalFormat df = new DecimalFormat("0.000");
+            System.out.println("Time: " + df.format(timelen) + "s");
+            return;
+        }
+        for (Order order : orders)
+            System.out.println(order.toString());
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 通过用户姓名查询其已订购的套餐
+     *
+     * @param username
+     */
+    private void showMyPackages(String username) {
+        double time1 = System.currentTimeMillis();
+
+        UserDao userDao = new UserDaoImpl();
+        OrderDao orderDao = new OrderDaoImpl();
+        List<User> users = userDao.getUserByName(username);
+        if(users == null || users.size() == 0) {
+            System.out.println("用户不存在。");
+            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            DecimalFormat df = new DecimalFormat("0.000");
+            System.out.println("Time: " + df.format(timelen) + "s");
+            return;
+        }
+        for (User user : users) {
+            List<Order> orders = orderDao.myOrders(user.getId());
+            if(orders == null || orders.size() == 0) {
+                System.out.println("此用户尚未订购任何套餐。");
+                double timelen = ((System.currentTimeMillis() - time1) / 1000);
+                DecimalFormat df = new DecimalFormat("0.000");
+                System.out.println("Time: " + df.format(timelen) + "s");
+                return;
+            }
+            System.out.println("客户编号：" + user.getId() + "  客户姓名：" + username);
+            for (Order order : orders)
+                System.out.println(order.toString());
+        }
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+
+    private void show(String orderline) {
+        String[] orders = orderline.split("\\s+");
+        if (orders.length == 2) {
+            if (orders[1].equals("-u")) {
+                showAllUsers();
+            } else if (orders[1].equals("-p")) {
+                showAllPackages();
+            } else {
+                System.out.println("Command not found.");
+                return;
+            }
+        } else if (orders.length == 3) {
+            if (orders[1].equals("-p")) {
+                showMyPackages(Integer.parseInt(orders[2]));
+            } else if (orders[1].equals("-b")) {
+                showMonthBill(Integer.parseInt(orders[2]), Calendar.getInstance().get(Calendar.MONTH));
+            } else {
+                System.out.println("Command not found.");
+                return;
+            }
+        } else if (orders.length == 4) {
+            if (orders[1].equals("-p") && orders[2].equals("-n")) {
+                showMyPackages(orders[3]);
+            } else if (orders[1].equals("-b")) {
+                showMonthBill(Integer.parseInt(orders[2]), Integer.parseInt(orders[3]));
+            } else {
+                System.out.println("Command not found.");
+                return;
+            }
+        } else {
+            System.out.println("Command not found.");
+        }
     }
 
     private void createPackage(String orderline) {
@@ -234,7 +397,7 @@ public class Main {
         String str = orderline.substring(start, end);
         String[] attrs = str.split("\\s*,\\s*+");
         if (attrs.length != 4) {
-            System.out.println("用户信息错误。");
+            System.out.println("Command not found.");
         } else {
             register(attrs[0], Double.parseDouble(attrs[1]), attrs[2], attrs[3]);
         }

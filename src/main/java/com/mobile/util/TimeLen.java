@@ -14,7 +14,7 @@ public class TimeLen {
     }
 
     public TimeLen(String s) {
-        String[] strs = s.split(".");
+        String[] strs = s.split("\\.");
         if (strs.length >= 1) {
             this.day = Integer.parseInt(strs[strs.length - 1]);
         }
@@ -22,8 +22,9 @@ public class TimeLen {
             this.month = Integer.parseInt(strs[strs.length - 2]);
         }
         if (strs.length == 3) {
-            this.month = Integer.parseInt(strs[strs.length - 3]);
+            this.year = Integer.parseInt(strs[strs.length - 3]);
         }
+
     }
 
     public int getYear() {
