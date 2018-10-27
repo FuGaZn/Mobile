@@ -73,19 +73,21 @@ public class Main {
 
                 /**-----------------------------------------------
                  * 用户订购套餐操作：
-                 * 命令：order uid pid
+                 * 命令：order uid pid [next]
                  * uid为客户编号
                  * pid为套餐编号
+                 * 默认从本月开始订购，加上next表示从下月开始订购
                  *
                  * 详情见说明文档。
                  * -----------------------------------------------
                  */
                 case "order":
+                    main.order(orderline);
                     break;
 
                 /**-----------------------------------------------
                  * 退订套餐操作：
-                 * 命令：unsub uid pid
+                 * 命令：unsub uid pid [next]
                  *
                  * 详情见说明文档。
                  * -----------------------------------------------
@@ -160,7 +162,7 @@ public class Main {
     private void register(String name, double balance, String location, String phone) {
         long time1 = System.currentTimeMillis();
 
-        User user = new User(0, name, balance, location, phone,0);
+        User user = new User(0, name, balance, location, phone, 0);
         UserDao userDao = new UserDaoImpl();
         userDao.add(user);
 
@@ -212,7 +214,7 @@ public class Main {
 
         UserDao userDao = new UserDaoImpl();
         Bill bill = userDao.monthBill(uid, month);
-        if(bill == null){
+        if (bill == null) {
             System.out.println("该用户尚未订购任何套餐。");
         }
         System.out.println(bill.toString());
@@ -270,18 +272,18 @@ public class Main {
 
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
-        if (user == null){
+        if (user == null) {
             System.out.println("用户不存在。");
-            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            double timelen = (System.currentTimeMillis() - time1) / 1000;
             DecimalFormat df = new DecimalFormat("0.000");
             System.out.println("Time: " + df.format(timelen) + "s");
             return;
         }
         OrderDao orderDao = new OrderDaoImpl();
         List<Order> orders = orderDao.myOrders(uid);
-        if(orders == null || orders.size() == 0) {
+        if (orders == null || orders.size() == 0) {
             System.out.println("此用户尚未订购任何套餐。");
-            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            double timelen = (System.currentTimeMillis() - time1) / 1000;
             DecimalFormat df = new DecimalFormat("0.000");
             System.out.println("Time: " + df.format(timelen) + "s");
             return;
@@ -305,16 +307,16 @@ public class Main {
         UserDao userDao = new UserDaoImpl();
         OrderDao orderDao = new OrderDaoImpl();
         List<User> users = userDao.getUserByName(username);
-        if(users == null || users.size() == 0) {
+        if (users == null || users.size() == 0) {
             System.out.println("用户不存在。");
-            double timelen = ((System.currentTimeMillis() - time1) / 1000);
+            double timelen = (System.currentTimeMillis() - time1) / 1000;
             DecimalFormat df = new DecimalFormat("0.000");
             System.out.println("Time: " + df.format(timelen) + "s");
             return;
         }
         for (User user : users) {
             List<Order> orders = orderDao.myOrders(user.getId());
-            if(orders == null || orders.size() == 0) {
+            if (orders == null || orders.size() == 0) {
                 System.out.println("此用户尚未订购任何套餐。");
                 double timelen = ((System.currentTimeMillis() - time1) / 1000);
                 DecimalFormat df = new DecimalFormat("0.000");
@@ -331,6 +333,40 @@ public class Main {
         System.out.println("Time: " + df.format(timelen) + "s");
     }
 
+    /**
+     * 订购套餐
+     *
+     * @param uid
+     * @param pid
+     * @param next 表示是否从下个月开始订购。默认false，从本月开始订购
+     */
+    public void order(int uid, int pid, boolean next) {
+        double time1 = System.currentTimeMillis();
+
+        OrderDao orderDao = new OrderDaoImpl();
+        if (next) {
+            orderDao.subscribeNextMonth(uid, pid);
+        } else {
+            orderDao.subscribeNow(uid, pid);
+        }
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    private void order(String orderline) {
+        OrderDao orderDao = new OrderDaoImpl();
+        String[] attrs = orderline.split("\\s+");
+        if (attrs.length < 3)
+            System.out.println("Command not found");
+        else if (attrs.length == 3)
+            orderDao.subscribeNow(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]));
+        else if (attrs.length == 4)
+            orderDao.subscribeNextMonth(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]));
+        else
+            System.out.println("Command not found");
+    }
 
     private void show(String orderline) {
         String[] orders = orderline.split("\\s+");
@@ -347,7 +383,9 @@ public class Main {
             if (orders[1].equals("-p")) {
                 showMyPackages(Integer.parseInt(orders[2]));
             } else if (orders[1].equals("-b")) {
-                showMonthBill(Integer.parseInt(orders[2]), Calendar.getInstance().get(Calendar.MONTH));
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.MONTH, 1);
+                showMonthBill(Integer.parseInt(orders[2]), cal.get(Calendar.MONTH));
             } else {
                 System.out.println("Command not found.");
                 return;

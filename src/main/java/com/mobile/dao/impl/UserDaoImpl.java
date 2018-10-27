@@ -70,7 +70,7 @@ public class UserDaoImpl implements UserDao {
         User user = userDao.get(uid);
         List<Order> orders = orderDao.myMonthOrders(uid, month);
 
-        Bill bill = new Bill(uid, user.getName(), orders, user.getBalance(), user.getBalance());
+        Bill bill = new Bill(uid, user.getName(), orders, user.getExpense(), user.getBalance(),month);
         return bill;
     }
 

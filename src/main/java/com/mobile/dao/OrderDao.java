@@ -8,15 +8,17 @@ import java.util.List;
 public interface OrderDao {
     /**
      * 立刻订购套餐
+     * @param uid
      * @param pid
      */
-    public void subscribeNow(int pid,int uid);
+    public void subscribeNow(int uid,int pid);
 
     /**
      * 从下个月起订购套餐
+     * @param uid
      * @param pid
      */
-    public void subscribeNextMonth(int pid,int uid);
+    public void subscribeNextMonth(int uid,int pid);
 
     /**
      * 查询一个客户的所有套餐（包括历史套餐）

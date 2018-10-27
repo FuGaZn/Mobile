@@ -88,7 +88,7 @@ public class OrderDaoImpl implements OrderDao {
     }
 
     @Override
-    public void subscribeNow(int pid, int uid) {
+    public void subscribeNow(int uid, int pid) {
         UserDao userDao = new UserDaoImpl();
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -180,7 +180,7 @@ public class OrderDaoImpl implements OrderDao {
     }
 
     @Override
-    public void subscribeNextMonth(int pid, int uid) {
+    public void subscribeNextMonth(int uid, int pid) {
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
         if (user == null) {
