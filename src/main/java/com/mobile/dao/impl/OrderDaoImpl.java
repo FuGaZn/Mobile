@@ -260,12 +260,21 @@ public class OrderDaoImpl implements OrderDao {
     }
 
     @Override
-    public void unsubscribeNextMonth(Order order) {
-
+    public void unsubscribeNextMonth(int uid, int pid) {
+        OrderDao orderDao = new OrderDaoImpl();
+        List<Order> list = new ArrayList<>(orderDao.myOrders(uid));
+        for (Order order: list){
+            if(order.getPid() == pid && order.isValid()){
+                order.setNext_month(false);
+                orderDao.update(order);
+            }
+        }
     }
 
+
+
     @Override
-    public void unsubscribeNow(Order order) {
+    public void unsubscribeNow(int uid, int pid) {
 
     }
 
@@ -284,4 +293,5 @@ public class OrderDaoImpl implements OrderDao {
             e.printStackTrace();
         }
     }
+
 }

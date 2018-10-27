@@ -26,6 +26,10 @@ public class User {
         return balance;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
     public String getName() {
         return uname;
     }

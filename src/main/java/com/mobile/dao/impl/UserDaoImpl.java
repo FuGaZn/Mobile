@@ -54,6 +54,28 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
+    public boolean add(User user) {
+        UserDao userDao = new UserDaoImpl();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        String sql = "insert into users(uid,uname,balance,location,phone) values(?,?,?,?,?)";
+        try{
+            conn = DBUtils.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1,user.getId());
+            ps.setString(2,user.getName());
+            ps.setDouble(3,user.getBalance());
+            ps.setString(4, user.getLocation());
+            ps.setString(5,user.getPhone());
+            ps.executeUpdate();
+            System.out.println("注册成功。");
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    @Override
     public void update(User user) {
         Connection conn = null;
         PreparedStatement ps = null;

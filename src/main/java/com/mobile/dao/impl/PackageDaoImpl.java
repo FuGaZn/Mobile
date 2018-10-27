@@ -37,6 +37,7 @@ public class PackageDaoImpl implements PackageDao {
             ps.setString(11,p.getLocation());
             ps.setString(12,p.getTimeLen().toString());
             ps.executeUpdate();
+            System.out.println("套餐创建成功。");
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {

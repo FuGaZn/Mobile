@@ -34,19 +34,22 @@ public interface OrderDao {
 
     /**
      * 立即退订套餐
-     * @param order
+     * @param pid
+     * @param uid
      */
-    public void unsubscribeNow(Order order);
+    public void unsubscribeNow(int uid, int pid);
 
     /**
      * 下月退订套餐
-     * @param order
+     * @param pid
+     * @param uid
      */
-    public void unsubscribeNextMonth(Order order);
+    public void unsubscribeNextMonth(int uid, int pid);
 
     /**
      * 更新已订购的套餐的信息
      * @param order
      */
     public void update(Order order);
+
 }

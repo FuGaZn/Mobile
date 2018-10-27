@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface UserDao {
 
+
     /**
      * 计算打电话的费用
      *
@@ -54,6 +55,13 @@ public interface UserDao {
      * @return
      */
     public User get(int uid);
+
+    /**
+     * 新增客户
+     * @param user
+     * @return
+     */
+    public boolean add(User user);
 
     /**
      * 返回某客户某月的账单

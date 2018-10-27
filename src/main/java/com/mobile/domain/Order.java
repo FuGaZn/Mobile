@@ -163,4 +163,8 @@ public class Order {
     public void setEnd(String end) {
         this.end = end;
     }
+
+    public void setNext_month(boolean next_month) {
+        this.next_month = next_month;
+    }
 }
