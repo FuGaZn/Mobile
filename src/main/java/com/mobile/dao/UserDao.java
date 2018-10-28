@@ -29,7 +29,7 @@ public interface UserDao {
      * @param uid
      * @param timelen
      */
-    public void call(int uid, int timelen);
+    public void call(int uid, double timelen);
 
     /**
      * 计算发短信的费用
@@ -45,7 +45,7 @@ public interface UserDao {
      * @param nums
      * @param location
      */
-    public void useFlow(int uid, int nums, String location);
+    public void useFlow(int uid, double nums, String location);
 
     /**
      * 判断是否还有余额

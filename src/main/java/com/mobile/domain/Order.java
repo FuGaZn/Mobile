@@ -12,8 +12,8 @@ public class Order {
     int uid;
     String pname;
     int message_nums;
-    int call_nums;
-    int flow_nums;
+    double call_nums;
+    double flow_nums;
     String start;
     String end;
     double pay;
@@ -24,7 +24,7 @@ public class Order {
     String location;
     boolean next_month;
 
-    public Order(int oid, int pid, int uid, String pname, int m, int c, int f, String st, String end, double pay, boolean valid,
+    public Order(int oid, int pid, int uid, String pname, int m, double c,double f, String st, String end, double pay, boolean valid,
                  double cop, double mop, double fop,String location,boolean next_month) {
         this.location=location;
         this.call_over_price = cop;
@@ -66,7 +66,7 @@ public class Order {
 
     public String flowToString() {
         String res = "";
-        int flow = this.flow_nums;
+        double flow = this.flow_nums;
         if (flow < 1024) {
             res = this.flow_nums + "K";
         } else if (flow < 1048576) {
@@ -123,7 +123,7 @@ public class Order {
         return message_nums;
     }
 
-    public int getCall_nums() {
+    public double getCall_nums() {
         return call_nums;
     }
 
@@ -140,15 +140,15 @@ public class Order {
     }
 
 
-    public int getFlow_nums() {
+    public double getFlow_nums() {
         return flow_nums;
     }
 
-    public void setFlow_nums(int flow_nums) {
+    public void setFlow_nums(double flow_nums) {
         this.flow_nums = flow_nums;
     }
 
-    public void setCall_nums(int call_nums) {
+    public void setCall_nums(double call_nums) {
         this.call_nums = call_nums;
     }
 

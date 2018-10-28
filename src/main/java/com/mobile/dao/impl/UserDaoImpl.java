@@ -6,7 +6,9 @@ import com.mobile.domain.Order;
 import com.mobile.domain.User;
 import com.mobile.util.Bill;
 import com.mobile.util.db.DBUtils;
+import com.sun.org.apache.xpath.internal.operations.Or;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,7 +35,7 @@ public class UserDaoImpl implements UserDao {
             ps.setString(1, name);
             rs = ps.executeQuery();
             while (rs.next()) {
-                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6)));
+                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5), rs.getDouble(6)));
             }
             return users;
         } catch (SQLException e) {
@@ -54,7 +56,7 @@ public class UserDaoImpl implements UserDao {
             ps = conn.prepareStatement(sql);
             rs = ps.executeQuery();
             while (rs.next()) {
-                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6)));
+                users.add(new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5), rs.getDouble(6)));
             }
             return users;
         } catch (SQLException e) {
@@ -70,7 +72,7 @@ public class UserDaoImpl implements UserDao {
         User user = userDao.get(uid);
         List<Order> orders = orderDao.myMonthOrders(uid, month);
 
-        Bill bill = new Bill(uid, user.getName(), orders, user.getExpense(), user.getBalance(),month);
+        Bill bill = new Bill(uid, user.getName(), orders, user.getExpense(), user.getBalance(), month);
         return bill;
     }
 
@@ -83,10 +85,10 @@ public class UserDaoImpl implements UserDao {
         try {
             con = DBUtils.getConnection();
             ps = con.prepareStatement(sql);
-            ps.setInt(1,uid);
+            ps.setInt(1, uid);
             rs = ps.executeQuery();
             if (rs.next()) {
-                User user = new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5),rs.getDouble(6));
+                User user = new User(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getString(5), rs.getDouble(6));
                 return user;
             }
         } catch (SQLException e) {
@@ -125,8 +127,8 @@ public class UserDaoImpl implements UserDao {
         try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setDouble(1,user.getBalance());
-            ps.setDouble(2,user.getExpense());
+            ps.setDouble(1, user.getBalance());
+            ps.setDouble(2, user.getExpense());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -157,32 +159,44 @@ public class UserDaoImpl implements UserDao {
 
 
     @Override
-    public void call(int uid, int timelen) {
+    public void call(int uid, double timelen) {
         OrderDao orderDao = new OrderDaoImpl();
         List<Order> orders = orderDao.myOrders(uid);
-
-        for (Order order : orders) {
-            if (order.isValid() && order.getCall_nums() > 0 && timelen > 0) {
-                int a = order.getCall_nums() > timelen ? timelen : order.getCall_nums();
-                order.setCall_nums(order.getCall_nums() - a);
-                timelen -= a;
-                orderDao.update(order);
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order.isValid() && order.getCall_nums() > 0 && timelen > 0) {
+                    double a = order.getCall_nums() > timelen ? timelen : order.getCall_nums();
+                    order.setCall_nums(order.getCall_nums() - a);
+                    timelen -= a;
+                    System.out.println("使用套餐：" + order.getPname() + "  扣除时长：" + a + "分钟  剩余时长：" + order.getCall_nums() + "分钟");
+                    orderDao.update(order);
+                }
             }
         }
         UserDao userDao = new UserDaoImpl();
         if (timelen > 0) {
-            double price = 0.5;
+            double price = 0.5; //基础资费
             User user = userDao.get(uid);
-            for (Order order : orders) {
-                if (order.isValid() && order.getCall_over_price() > 0) {
-                    price = order.getCall_over_price();
+            Order o = null;
+            if (orders != null) {
+                for (Order order : orders) {
+                    if (order.isValid() && order.getCall_over_price() > 0) {
+                        double p = price;
+                        price = Math.min(price, order.getCall_over_price());
+                        if (p < price)
+                            o = order;
+                    }
                 }
             }
             user.setBalance(user.getBalance() - timelen * price);
             user.setExpense(user.getExpense() + timelen * price);
             userDao.update(user);
+            if (o != null)
+                System.out.println("超出套餐外时长：" + timelen + "分钟  根据 " + o.getPname() + " 套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen + "元。");
+            else
+                System.out.println("超出套餐外时长：" + timelen + "分钟  无可用套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen + "元。");
             if (user.getBalance() < 0) {
-                System.out.println("您已欠费，保留接听业务。请尽快充值。");
+                System.out.println("您已欠费" + user.getBalance() + "元，保留接听业务。请尽快充值。");
             }
         }
     }
@@ -193,64 +207,109 @@ public class UserDaoImpl implements UserDao {
         List<Order> orders = orderDao.myOrders(uid);
 
         boolean b = false;
-        for (Order order : orders) {
-            if (order.isValid() && order.getMessage_nums() > 0) {
-                order.setMessage_nums(order.getMessage_nums() - 1);
-                orderDao.update(order);
-                b = true;
-                break;
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order.isValid() && order.getMessage_nums() > 0) {
+                    order.setMessage_nums(order.getMessage_nums() - 1);
+                    System.out.println("使用套餐：" + order.getPname() + "  剩余短信条数：" + order.getCall_nums() + "条");
+                    orderDao.update(order);
+                    b = true;
+                    break;
+                }
             }
         }
         UserDao userDao = new UserDaoImpl();
         if (b == false) {
             double price = 0.1;
             User user = userDao.get(uid);
-            for (Order order : orders) {
-                if (order.isValid() && order.getMsg_over_price() > 0)
-                    price = order.getMsg_over_price();
-
+            Order o = null;
+            if (orders != null) {
+                for (Order order : orders) {
+                    if (order.isValid() && order.getMsg_over_price() > 0) {
+                        double p = price;
+                        price = Math.min(order.getMsg_over_price(), price);
+                        if (p < price)
+                            o = order;
+                    }
+                }
             }
             user.setBalance(user.getBalance() - price);
             user.setExpense(user.getExpense() + price);
             userDao.update(user);
+            if (o != null)
+                System.out.println("超出套餐最多短信条数  根据 " + o.getPname() + " 套餐，超出短信按照" + price + "元/条计费，共" + price + "元");
+            else
+                System.out.println("超出套餐最多短信条数  无可用套餐，超出短信按照" + price + "元/条计费，共" + price + "元");
             if (user.getBalance() < 0) {
-                System.out.println("您已欠费，保留接听业务。请尽快充值。");
+                System.out.println("您已欠费" + user.getBalance() + "元，保留接听业务。请尽快充值。");
             }
         }
     }
 
+    public String flowToString(double a) {
+        String res = "";
+        double flow = a;
+        if (flow < 1024) {
+            res = flow + "K";
+        } else if (flow < 1048576) {
+            res = new BigDecimal(flow / 1024).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() + "M";
+        } else
+            res = new BigDecimal(flow / 1048576).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() + "G";
+        return res;
+    }
+
+
     @Override
-    public void useFlow(int uid, int nums, String location) {
+    public void useFlow(int uid, double nums, String location) {
         OrderDao orderDao = new OrderDaoImpl();
         List<Order> orders = orderDao.myOrders(uid);
-
-        for (Order order : orders) {
-            if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
-                int a = order.getFlow_nums() > nums ? nums : order.getCall_nums();
-                order.setCall_nums(order.getCall_nums() - a);
-                nums -= a;
-                orderDao.update(order);
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
+                    double a = order.getFlow_nums() > nums ? nums : order.getCall_nums();
+                    order.setCall_nums(order.getCall_nums() - a);
+                    nums -= a;
+                    orderDao.update(order);
+                    System.out.println("使用套餐：" + order.getPname() + "  扣除流量：" + flowToString(a) + "  剩余流量：" + order.flowToString());
+                }
             }
         }
         UserDao userDao = new UserDaoImpl();
         if (nums > 0) {
             double price = 5;   //国内流量价格
-            boolean b = false;
             User user = userDao.get(uid);
-            for (Order order : orders) {
-                if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location))) {
-                    price = Math.min(order.getFlow_over_price(), price);
-                    b = true;
+            Order o = null;
+            if (orders != null) {
+                for (Order order : orders) {
+                    if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location))) {
+                        double p = price;
+                        price = Math.min(order.getFlow_over_price(), price);
+                        if (p < price) {
+                            o = order;
+                        }
+                    }
                 }
             }
-            if (b == false) {
+            if (o == null) {
                 if (user.getLocation().equals(location)) {
                     price = 3;  //本地流量价格
                 }
             }
-            user.setBalance(user.getBalance() - nums / 1024 * price);
-            user.setExpense(user.getExpense() + nums / 1024 * price);
+            user.setBalance(new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            user.setExpense(new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
             userDao.update(user);
+            if (o != null)
+                System.out.println("超出套餐可用流量  根据 " + o.getPname() + " 套餐，超出流量按照" + price + "元/M计费，共" +
+                        new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() + "元");
+            else {
+                if (price == 3) {
+                    System.out.println("超出套餐可用流量  无可用套餐，超出流量按照" + price + "元/M计费（本地流量），共" +
+                            new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP) + "元");
+                } else
+                    System.out.println("超出套餐可用流量  无可用套餐，超出流量按照" + price + "元/M计费（国内流量），共" +
+                            new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP) + "元");
+            }
+
             if (user.getBalance() < 0) {
                 System.out.println("您已欠费，保留接听业务。请尽快充值。");
             }

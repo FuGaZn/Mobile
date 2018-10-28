@@ -88,7 +88,9 @@ public class Main {
                 /**-----------------------------------------------
                  * 退订套餐操作：
                  * 命令：unsub uid pid [next]
-                 *
+                 * uid  客户编号
+                 * pid  套餐编号
+                 * next  可选参数，默认是从本月开始退订，加上next表示从下月开始退订
                  * 详情见说明文档。
                  * -----------------------------------------------
                  */
@@ -98,7 +100,7 @@ public class Main {
                 /**-----------------------------------------------
                  * 用户拨打电话时的资费生成：
                  * 命令：call uid minutes
-                 * uid  客户编号
+                 * uid      客户编号
                  * minutes  拨打电话的时长
                  * 返回信息：使用的套餐、扣除的费用、余额
                  *
@@ -107,6 +109,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "call":
+                    main.call(orderline);
                     break;
                 /**-----------------------------------------------
                  * 用户发送短信时的资费生成：
@@ -119,6 +122,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "send":
+                    main.sendMsg(orderline);
                     break;
                 /**-----------------------------------------------
                  * 用户使用流量时的资费生成：
@@ -133,6 +137,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "surf":
+                    main.surf(orderline);
                     break;
 
                 /**-----------------------------------------------
@@ -355,15 +360,142 @@ public class Main {
         System.out.println("Time: " + df.format(timelen) + "s");
     }
 
+    /**
+     * @param uid     客户编号
+     * @param minutes 通话时长
+     */
+    public void call(int uid, double minutes) {
+        double time1 = System.currentTimeMillis();
+
+        UserDao userDao = new UserDaoImpl();
+        userDao.call(uid, minutes);
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 发送短信
+     *
+     * @param uid
+     */
+    public void sendMsg(int uid) {
+        double time1 = System.currentTimeMillis();
+
+        UserDao userDao = new UserDaoImpl();
+        userDao.sendMsg(uid);
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 使用流量
+     *
+     * @param uid
+     * @param flow
+     * @param location 可以为null，表示在本地
+     */
+    public void surf(int uid, String flow, String location) {
+        double time1 = System.currentTimeMillis();
+
+        double num = Double.parseDouble(flow.substring(0, flow.length() - 1));
+        char c = flow.charAt(flow.length() - 1);
+        if (c == 'M') {
+            num *= 1024;
+        } else if (c == 'G') {
+            num *= 1024 * 1024;
+        } else if (c == 'K') {
+
+        } else {
+            System.out.println("Command not found");
+            return;
+        }
+        UserDao userDao = new UserDaoImpl();
+        if (location == null) {
+            location = userDao.get(uid).getLocation();
+        }
+        userDao.useFlow(uid, num, location);
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    /**
+     * 退订套餐
+     *
+     * @param uid
+     * @param pid
+     * @param next 为true时表示从下月开始退订，否则立即退订
+     */
+    public void unsubscribe(int uid, int pid, boolean next) {
+        double time1 = System.currentTimeMillis();
+
+        OrderDao orderDao = new OrderDaoImpl();
+        if (next) {
+            orderDao.unsubscribeNextMonth(uid, pid);
+        } else {
+            orderDao.unsubscribeNow(uid, pid);
+        }
+
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
+    }
+
+    public void unsubscribe(String orderline) {
+        String[] attrs = orderline.split("\\s+");
+        if (attrs.length == 3) {
+            unsubscribe(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]), false);
+        } else if (attrs.length == 4 && attrs[3].equals("next")) {
+            unsubscribe(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]), true);
+        } else {
+            System.out.println("Command not found.");
+        }
+    }
+
+    public void surf(String orderline) {
+        String[] attrs = orderline.split("\\s+");
+        if (attrs.length == 3) {
+            surf(Integer.parseInt(attrs[1]), attrs[2], null);
+        } else if (attrs.length == 4) {
+            surf(Integer.parseInt(attrs[1]), attrs[2], attrs[3]);
+        } else {
+            System.out.println("Command not found.");
+        }
+    }
+
+    public void sendMsg(String orderline) {
+        String[] attrs = orderline.split("\\s+");
+        if (attrs.length != 2) {
+            System.out.println("Command not found");
+            return;
+        }
+        sendMsg(Integer.parseInt(attrs[1]));
+    }
+
+    public void call(String orderline) {
+        String[] attrs = orderline.split("\\s+");
+        if (attrs.length != 3) {
+            System.out.println("Command not found");
+            return;
+        }
+        call(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]));
+    }
+
+
     private void order(String orderline) {
         OrderDao orderDao = new OrderDaoImpl();
         String[] attrs = orderline.split("\\s+");
         if (attrs.length < 3)
             System.out.println("Command not found");
         else if (attrs.length == 3)
-            orderDao.subscribeNow(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]));
-        else if (attrs.length == 4)
-            orderDao.subscribeNextMonth(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]));
+            order(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]), false);
+        else if (attrs.length == 4 && attrs[3].equals("next"))
+            order(Integer.parseInt(attrs[1]), Integer.parseInt(attrs[2]), true);
         else
             System.out.println("Command not found");
     }

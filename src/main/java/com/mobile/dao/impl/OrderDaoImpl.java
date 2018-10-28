@@ -262,19 +262,39 @@ public class OrderDaoImpl implements OrderDao {
     public void unsubscribeNextMonth(int uid, int pid) {
         OrderDao orderDao = new OrderDaoImpl();
         List<Order> list = new ArrayList<>(orderDao.myOrders(uid));
-        for (Order order: list){
-            if(order.getPid() == pid && order.isValid()){
-                order.setNext_month(false);
-                orderDao.update(order);
+        if (list != null) {
+            for (Order order : list) {
+                if (order.getPid() == pid && order.isValid()) {
+                    order.setNext_month(false);
+                    orderDao.update(order);
+                    System.out.println("退订成功。");
+                    return;
+                }
             }
+            System.out.println("客户并未订购该套餐。");
+        } else {
+            System.out.println("客户尚未订购任何套餐。");
         }
     }
 
 
-
     @Override
     public void unsubscribeNow(int uid, int pid) {
-
+        OrderDao orderDao = new OrderDaoImpl();
+        List<Order> list = new ArrayList<>(orderDao.myOrders(uid));
+        if (list != null) {
+            for (Order order : list) {
+                if (order.getPid() == pid && order.isValid()) {
+                    order.setValid(false);
+                    orderDao.update(order);
+                    System.out.println("本月退订成功。");
+                    return;
+                }
+            }
+            System.out.println("客户本月并未订购该套餐。");
+        } else {
+            System.out.println("客户尚未订购任何套餐");
+        }
     }
 
     @Override
