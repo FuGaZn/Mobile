@@ -12,6 +12,7 @@ import com.mobile.util.db.DBUtils;
 import com.sun.org.apache.xpath.internal.operations.Or;
 
 import javax.jws.soap.SOAPBinding;
+import java.net.SocketImpl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -295,7 +296,7 @@ public class OrderDaoImpl implements OrderDao {
             ps = conn.prepareStatement(sql2);
             ps.setInt(1, order.getOid());
             ps.setInt(2, order.getPid());
-            ps.setInt(3, order.getOid());
+            ps.setInt(3, order.getUid());
             ps.setString(4, order.getPname());
             ps.setInt(5, order.getMessage_nums());
             ps.setDouble(6, order.getCall_nums());
@@ -310,6 +311,53 @@ public class OrderDaoImpl implements OrderDao {
             ps.setString(15, order.getLocation());
             ps.setBoolean(16, order.isNextMonthValid());
             ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void init() {
+        OrderDao orderDao = new OrderDaoImpl();
+        UserDao userDao = new UserDaoImpl();
+        BillDao billDao = new BillDaoImpl();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String sql = "select * from orders where next_month=true and valid=TRUE;";
+        String sql2 = "select * from orders where valid=TRUE and endTime<?";
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            conn = DBUtils.getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Order order = new Order(0, rs.getInt(1), rs.getInt(2), rs.getString(3),
+                        rs.getInt(4), rs.getInt(5), rs.getInt(6), rs.getString(7),
+                        rs.getString(8), rs.getDouble(9), true, rs.getDouble(11),
+                        rs.getDouble(12), rs.getDouble(13), rs.getString(14), true);
+
+                SimpleDateFormat format1 = new SimpleDateFormat("yyyy");
+                order.setStart(format.format(calendar.getTime()));
+                calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(calendar.DAY_OF_MONTH));
+                order.setEnd(format.format(calendar.getTime()));
+                orderDao.add(order);
+                User user = userDao.get(order.getUid());
+                Bill bill = new Bill(0, order.getUid(), format1.format(calendar.getTime()), calendar.get(Calendar.MONTH) + 1, user.getBalance(), order.getPay());
+                billDao.add(bill);
+            }
+
+            ps = conn.prepareStatement(sql2);
+            ps.setString(1, format.format(calendar.getTime()));
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Order order = new Order(0, rs.getInt(1), rs.getInt(2), rs.getString(3),
+                        rs.getInt(4), rs.getInt(5), rs.getInt(6), rs.getString(7),
+                        rs.getString(8), rs.getDouble(9), false, rs.getDouble(11),
+                        rs.getDouble(12), rs.getDouble(13), rs.getString(14), false);
+                orderDao.update(order);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

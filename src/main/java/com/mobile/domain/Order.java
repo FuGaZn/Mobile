@@ -170,4 +170,8 @@ public class Order {
     public void setNext_month(boolean next_month) {
         this.next_month = next_month;
     }
+
+    public void setStart(String start) {
+        this.start = start;
+    }
 }

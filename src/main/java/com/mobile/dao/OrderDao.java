@@ -63,4 +63,9 @@ public interface OrderDao {
      * @param order
      */
     public void add(Order order);
+
+    /**
+     * 初始化
+     */
+    public void init();
 }

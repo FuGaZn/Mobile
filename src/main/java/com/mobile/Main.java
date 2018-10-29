@@ -162,12 +162,20 @@ public class Main {
      * 将会为客户生成新的套餐和取消旧的套餐
      */
     public void init(){
+        double time1 = System.currentTimeMillis();
+
+        OrderDao orderDao = new OrderDaoImpl();
         Calendar calendar = Calendar.getInstance();
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         if(day!=1){
             System.out.println("此时不能初始化系统。");
             return;
+        }else{
+            orderDao.init();
         }
+        double timelen = ((System.currentTimeMillis() - time1) / 1000);
+        DecimalFormat df = new DecimalFormat("0.000");
+        System.out.println("Time: " + df.format(timelen) + "s");
     }
     /**
      * @param name     客户姓名
