@@ -5,6 +5,10 @@ import com.mobile.domain.Package;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public interface PackageDao {
     /**
      * 新增一种套餐

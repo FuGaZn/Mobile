@@ -8,7 +8,7 @@ import java.util.List;
  * date: 2018/10/27
  * author: fu jia xing 161250025
  * <p>
- * 月账单
+ * 月账单扩展，包括每月消费的套餐
  */
 public class BillExtend {
     int uid;

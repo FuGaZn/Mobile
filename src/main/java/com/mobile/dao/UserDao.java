@@ -5,6 +5,10 @@ import com.mobile.util.BillExtend;
 
 import java.util.List;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public interface UserDao {
 
     /**

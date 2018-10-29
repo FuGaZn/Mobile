@@ -1,7 +1,7 @@
 package com.mobile.domain;
 
 /**
- * date: 2018/10/26
+ * date: 2018/10/28
  * author: fu jia xing 161250025
  */
 public class Bill {

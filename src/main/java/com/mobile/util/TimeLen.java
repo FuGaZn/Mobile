@@ -2,6 +2,10 @@ package com.mobile.util;
 
 import java.util.Calendar;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing  161250025
+ */
 public class TimeLen {
     int year;
     int month;

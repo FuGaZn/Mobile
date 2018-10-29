@@ -9,6 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * date: 2018/10/28
+ * author: fu jia xing  161250025
+ */
 public class BillDaoImpl implements BillDao {
     @Override
     public Bill get(int uid, String year, int month) {

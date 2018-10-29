@@ -5,6 +5,10 @@ import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.util.List;
 
+/**
+ * date: 2018/10/26
+ * author: fu jia xing
+ */
 public interface OrderDao {
     /**
      * 立刻订购套餐
@@ -54,4 +58,9 @@ public interface OrderDao {
      */
     public void update(Order order);
 
+    /**
+     * 添加个人订购的套餐
+     * @param order
+     */
+    public void add(Order order);
 }

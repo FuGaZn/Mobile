@@ -148,31 +148,14 @@ public class OrderDaoImpl implements OrderDao {
                 if (bill == null) {
                     bill = new Bill(0, uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1, user.getBalance(), order.getPay());
                     billDao.add(bill);
-                }else {
+                } else {
                     bill.setBalance(user.getBalance());
                     bill.setExpense(bill.getExpense() + order.getPay());
                     billDao.update(bill);
                 }
 
-                String sql2 = "insert into orders(oid,pid,uid,pname,message_nums,call_nums,flow_nums,startTime,endTime,pay,valid,msg_over_price,call_over_price,flow_over_price,location,next_month) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?); ";
-                ps = conn.prepareStatement(sql2);
-                ps.setInt(1, order.getOid());
-                ps.setInt(2, order.getPid());
-                ps.setInt(3, order.getUid());
-                ps.setString(4, order.getPname());
-                ps.setInt(5, order.getMessage_nums());
-                ps.setDouble(6, order.getCall_nums());
-                ps.setDouble(7, order.getFlow_nums());
-                ps.setString(8, order.getStart());
-                ps.setString(9, order.getEnd());
-                ps.setDouble(10, order.getPay());
-                ps.setBoolean(11, order.isValid());
-                ps.setDouble(12, order.getMsg_over_price());
-                ps.setDouble(13, order.getCall_over_price());
-                ps.setDouble(14, order.getFlow_over_price());
-                ps.setString(15, order.getLocation());
-                ps.setBoolean(16, order.isNextMonthValid());
-                ps.executeUpdate();
+                OrderDao orderDao = new OrderDaoImpl();
+                orderDao.add(order);
                 System.out.println("您已成功订购本套餐");
             } else {
                 System.out.println("套餐不存在。");
@@ -184,6 +167,7 @@ public class OrderDaoImpl implements OrderDao {
 
     @Override
     public void subscribeNextMonth(int uid, int pid) {
+        OrderDao orderDao = new OrderDaoImpl();
         UserDao userDao = new UserDaoImpl();
         User user = userDao.get(uid);
         if (user == null) {
@@ -232,26 +216,7 @@ public class OrderDaoImpl implements OrderDao {
                         return;
                     }
                 }
-
-                String sql2 = "insert into orders(oid,pid,uid,pname,message_nums,call_nums,flow_nums,startTime,endTime,pay,valid,msg_over_price,call_over_price,flow_over_price,location,next_month) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?); ";
-                ps = conn.prepareStatement(sql2);
-                ps.setInt(1, order.getOid());
-                ps.setInt(2, order.getPid());
-                ps.setInt(3, order.getOid());
-                ps.setString(4, order.getPname());
-                ps.setInt(5, order.getMessage_nums());
-                ps.setDouble(6, order.getCall_nums());
-                ps.setDouble(7, order.getFlow_nums());
-                ps.setString(8, order.getStart());
-                ps.setString(9, order.getEnd());
-                ps.setDouble(10, order.getPay());
-                ps.setBoolean(11, order.isValid());
-                ps.setDouble(12, order.getMsg_over_price());
-                ps.setDouble(13, order.getCall_over_price());
-                ps.setDouble(14, order.getFlow_over_price());
-                ps.setString(15, order.getLocation());
-                ps.setBoolean(16, order.isNextMonthValid());
-                ps.executeUpdate();
+                orderDao.add(order);
                 System.out.println("您已成功订购本套餐");
             } else {
                 System.out.println("套餐不存在。");
@@ -310,14 +275,43 @@ public class OrderDaoImpl implements OrderDao {
             ps = conn.prepareStatement(sql);
             ps.setString(1, order.getEnd());
             ps.setBoolean(2, order.isValid());
-            ps.setInt(3,order.getMessage_nums());
-            ps.setDouble(4,order.getCall_nums());
-            ps.setDouble(5,order.getFlow_nums());
-            ps.setBoolean(6,order.isNextMonthValid());
+            ps.setInt(3, order.getMessage_nums());
+            ps.setDouble(4, order.getCall_nums());
+            ps.setDouble(5, order.getFlow_nums());
+            ps.setBoolean(6, order.isNextMonthValid());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
+    public void add(Order order) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = DBUtils.getConnection();
+            String sql2 = "insert into orders(oid,pid,uid,pname,message_nums,call_nums,flow_nums,startTime,endTime,pay,valid,msg_over_price,call_over_price,flow_over_price,location,next_month) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?); ";
+            ps = conn.prepareStatement(sql2);
+            ps.setInt(1, order.getOid());
+            ps.setInt(2, order.getPid());
+            ps.setInt(3, order.getOid());
+            ps.setString(4, order.getPname());
+            ps.setInt(5, order.getMessage_nums());
+            ps.setDouble(6, order.getCall_nums());
+            ps.setDouble(7, order.getFlow_nums());
+            ps.setString(8, order.getStart());
+            ps.setString(9, order.getEnd());
+            ps.setDouble(10, order.getPay());
+            ps.setBoolean(11, order.isValid());
+            ps.setDouble(12, order.getMsg_over_price());
+            ps.setDouble(13, order.getCall_over_price());
+            ps.setDouble(14, order.getFlow_over_price());
+            ps.setString(15, order.getLocation());
+            ps.setBoolean(16, order.isNextMonthValid());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
