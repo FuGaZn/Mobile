@@ -20,7 +20,7 @@ public class PackageDaoImpl implements PackageDao {
     public void add(Package p) {
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "insert into Packages(pid,pname,message_nums,call_nums,flow_nums,pay,valid,msg_over_price,call_over_price,flow_over_price,location,time_len) values(?,?,?,?,?,?,?,?,?,?,?,?);";
+        String sql = "insert into Packages(pid,pname,message_nums,call_nums,flow_nums,pay,valid,msg_over_price,call_over_price,flow_over_price,location,time_len,next_month) values(?,?,?,?,?,?,?,?,?,?,?,?,?);";
         try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
@@ -36,6 +36,7 @@ public class PackageDaoImpl implements PackageDao {
             ps.setDouble(10,p.getFlow_over_price());
             ps.setString(11,p.getLocation());
             ps.setString(12,p.getTimeLen().toString());
+            ps.setBoolean(13,p.isNextMonthValid());
             ps.executeUpdate();
             System.out.println("套餐创建成功。");
         } catch (SQLException e) {

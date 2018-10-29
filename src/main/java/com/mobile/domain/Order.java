@@ -79,9 +79,12 @@ public class Order {
     @Override
     public String toString() {
         StringBuilder res = new StringBuilder("");
-        if (this.valid)
-            res.append("【使用中】 ");
-        else
+        if (this.valid) {
+            res.append("【使用中");
+            if(next_month == false)
+                res.append(" 下月退订");
+            res.append("】");
+        }else
             res.append("【已失效】 ");
         res.append("套餐编号：" + this.pid + "  ");
         res.append("套餐类型：" + this.pname + "  月功能费：" + this.pay + "  ");

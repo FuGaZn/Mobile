@@ -9,9 +9,7 @@ import com.mobile.dao.impl.UserDaoImpl;
 import com.mobile.domain.Order;
 import com.mobile.domain.Package;
 import com.mobile.domain.User;
-import com.mobile.util.Bill;
-import com.mobile.util.TimeLen;
-import com.sun.org.apache.xpath.internal.operations.Or;
+import com.mobile.util.BillExtend;
 
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -95,6 +93,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "unsub":
+                    main.unsubscribe(orderline);
                     break;
 
                 /**-----------------------------------------------
@@ -148,6 +147,7 @@ public class Main {
                  * -----------------------------------------------
                  */
                 case "init":
+                    main.init();
                     break;
 
             }
@@ -157,6 +157,18 @@ public class Main {
         }
     }
 
+    /**
+     * 初始化操作，只适用于每月1日
+     * 将会为客户生成新的套餐和取消旧的套餐
+     */
+    public void init(){
+        Calendar calendar = Calendar.getInstance();
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        if(day!=1){
+            System.out.println("此时不能初始化系统。");
+            return;
+        }
+    }
     /**
      * @param name     客户姓名
      * @param balance  账户余额
@@ -182,7 +194,7 @@ public class Main {
      * @param pname           套餐名称
      * @param message_num     套餐内所含的最多可以发送的短信条数，单位：条
      * @param call_num        最多可以拨打的电话时长，单位：分钟
-     * @param flow_num        最多可以使用的流量数，单位：K
+     * @param flow_num        最多可以使用的流量数，单位：K/M/G
      * @param pay             月功能费
      * @param msg_over_price  发送短信超出条数的价格，单位：元/条
      * @param call_over_price 拨打电话超出时间的价格，单位：元/分钟
@@ -191,11 +203,23 @@ public class Main {
      * @param timeLen         套餐期限（可以是月套餐，也可以是一日无限包、十日流量包等短期套餐包）
      *                        timelen的格式："0.0.0"    从左到右分别表示年、月、日数
      */
-    private void createPackage(String pname, int message_num, int call_num, int flow_num, double pay, double msg_over_price,
+    private void createPackage(String pname, int message_num, int call_num, String flow_num, double pay, double msg_over_price,
                                double call_over_price, double flow_over_price, String location, String timeLen) {
         double time1 = System.currentTimeMillis();
 
-        Package p = new Package(0, pname, message_num, call_num, flow_num, pay, true, msg_over_price, call_over_price, flow_over_price, location, timeLen, true);
+        int num = Integer.parseInt(flow_num.substring(0, flow_num.length() - 1));
+        char c = flow_num.charAt(flow_num.length() - 1);
+        if (c == 'M') {
+            num *= 1024;
+        } else if (c == 'G') {
+            num *= 1024 * 1024;
+        } else if (c == 'K') {
+
+        } else {
+            System.out.println("Command not found");
+            return;
+        }
+        Package p = new Package(0, pname, message_num, call_num, num, pay, true, msg_over_price, call_over_price, flow_over_price, location, timeLen, true);
         PackageDao packageDao = new PackageDaoImpl();
         try {
             packageDao.add(p);
@@ -217,12 +241,13 @@ public class Main {
     private void showMonthBill(int uid, int month) {
         double time1 = System.currentTimeMillis();
 
+        SimpleDateFormat format = new SimpleDateFormat("yyyy");
         UserDao userDao = new UserDaoImpl();
-        Bill bill = userDao.monthBill(uid, month);
-        if (bill == null) {
-            System.out.println("该用户尚未订购任何套餐。");
-        }
-        System.out.println(bill.toString());
+        BillExtend billExtend = userDao.monthBill(uid, format.format(Calendar.getInstance().getTime()),month);
+        if (billExtend == null) {
+            System.out.println("该月无账单。");
+        }else
+            System.out.println(billExtend.toString());
 
         double timelen = ((System.currentTimeMillis() - time1) / 1000);
         DecimalFormat df = new DecimalFormat("0.000");
@@ -279,8 +304,8 @@ public class Main {
         User user = userDao.get(uid);
         if (user == null) {
             System.out.println("用户不存在。");
-            double timelen = (System.currentTimeMillis() - time1) / 1000;
             DecimalFormat df = new DecimalFormat("0.000");
+            double timelen = (System.currentTimeMillis() - time1) / 1000;
             System.out.println("Time: " + df.format(timelen) + "s");
             return;
         }
@@ -407,9 +432,7 @@ public class Main {
             num *= 1024;
         } else if (c == 'G') {
             num *= 1024 * 1024;
-        } else if (c == 'K') {
-
-        } else {
+        } else if (c != 'K') {
             System.out.println("Command not found");
             return;
         }
@@ -546,7 +569,7 @@ public class Main {
         }
         String str = orderline.substring(start, end);
         String[] attrs = str.split("\\s*,\\s*+");
-        createPackage(attrs[0], (int) str2digit(attrs[1]), (int) str2digit(attrs[2]), (int) str2digit(attrs[3]),
+        createPackage(attrs[0], (int) str2digit(attrs[1]), (int) str2digit(attrs[2]), attrs[3],
                 str2digit(attrs[4]), str2digit(attrs[5]), str2digit(attrs[6]), str2digit(attrs[7]), attrs[8], attrs[9]);
     }
 

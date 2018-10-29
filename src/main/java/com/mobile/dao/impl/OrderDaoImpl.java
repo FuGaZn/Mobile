@@ -1,7 +1,9 @@
 package com.mobile.dao.impl;
 
+import com.mobile.dao.BillDao;
 import com.mobile.dao.OrderDao;
 import com.mobile.dao.UserDao;
+import com.mobile.domain.Bill;
 import com.mobile.domain.Order;
 import com.mobile.domain.Package;
 import com.mobile.domain.User;
@@ -29,35 +31,23 @@ public class OrderDaoImpl implements OrderDao {
     public List<Order> myMonthOrders(int uid, int month) {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        calendar.set(Calendar.MONTH, month);
+        calendar.set(Calendar.MONTH, month - 1);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
         String start = format.format(calendar.getTime());
-        calendar.set(Calendar.MONTH, month + 1);
+        calendar.set(Calendar.MONTH, month);
         String end = format.format(calendar.getTime());
-
-        String sql = "select * from orders where uid=? and ((startTime<=? and endTime>=?) or (startTime>=? and endTime<=?));";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtils.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, uid);
-            ps.setString(2, start);
-            ps.setString(3, end);
-            ps.setString(4, start);
-            ps.setString(5, end);
-            rs = ps.executeQuery();
-            List<Order> orders = new ArrayList<>();
-            while (rs.next()) {
-                orders.add(new Order(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getString(4), rs.getInt(5), rs.getInt(6), rs.getInt(7), rs.getString(8), rs.getString(9), rs.getDouble(10), rs.getBoolean(11),
-                        rs.getDouble(12), rs.getDouble(13), rs.getDouble(14), rs.getString(15), rs.getBoolean(16)));
+        OrderDao orderDao = new OrderDaoImpl();
+        List<Order> orders = orderDao.myOrders(uid);
+        List<Order> monthOrders = new ArrayList<>();
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order.getStart().compareTo(start) <= 0 && order.getEnd().compareTo(end) >= 0 ||
+                        order.getStart().compareTo(start) >= 0 && order.getEnd().compareTo(end) <= 0) {
+                    monthOrders.add(order);
+                }
             }
-            return orders;
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return null;
+        return monthOrders;
     }
 
     @Override
@@ -118,6 +108,7 @@ public class OrderDaoImpl implements OrderDao {
                     return;
                 } else {
                     user.setBalance(user.getBalance() - pay);
+                    user.setExpense(user.getExpense() + pay);
                     userDao.update(user);
                 }
 
@@ -137,7 +128,7 @@ public class OrderDaoImpl implements OrderDao {
                     end = format.format(calendar.getTime());
                 }
 
-                Order order = new Order(1, p.getPid(), uid, p.getPname(), p.getMessage_nums(), p.getCall_nums(), p.getFlow_nums(), start, end, p.getPay(), true, p.getMsg_over_price(), p.getCall_over_price(), p.getFlow_over_price(), p.getLocation(), p.isNextMonthValid());
+                Order order = new Order(0, p.getPid(), user.getId(), p.getPname(), p.getMessage_nums(), p.getCall_nums(), p.getFlow_nums(), start, end, p.getPay(), true, p.getMsg_over_price(), p.getCall_over_price(), p.getFlow_over_price(), p.getLocation(), p.isNextMonthValid());
 
                 String sql3 = "select startTime, endTime, valid from orders where pid=? and uid=?;";
                 ps = conn.prepareStatement(sql3);
@@ -151,11 +142,23 @@ public class OrderDaoImpl implements OrderDao {
                     }
                 }
 
+                SimpleDateFormat format1 = new SimpleDateFormat("yyyy");
+                BillDao billDao = new BillDaoImpl();
+                Bill bill = billDao.get(uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1);
+                if (bill == null) {
+                    bill = new Bill(0, uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1, user.getBalance(), order.getPay());
+                    billDao.add(bill);
+                }else {
+                    bill.setBalance(user.getBalance());
+                    bill.setExpense(bill.getExpense() + order.getPay());
+                    billDao.update(bill);
+                }
+
                 String sql2 = "insert into orders(oid,pid,uid,pname,message_nums,call_nums,flow_nums,startTime,endTime,pay,valid,msg_over_price,call_over_price,flow_over_price,location,next_month) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?); ";
                 ps = conn.prepareStatement(sql2);
                 ps.setInt(1, order.getOid());
                 ps.setInt(2, order.getPid());
-                ps.setInt(3, order.getOid());
+                ps.setInt(3, order.getUid());
                 ps.setString(4, order.getPname());
                 ps.setInt(5, order.getMessage_nums());
                 ps.setDouble(6, order.getCall_nums());
@@ -301,12 +304,16 @@ public class OrderDaoImpl implements OrderDao {
     public void update(Order order) {
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "update order set endTime=?,valid=? where oid=" + order.getOid() + ";";
+        String sql = "update orders set endTime=?,valid=?,message_nums=?,call_nums=?,flow_nums=?,next_month=? where oid=" + order.getOid() + ";";
         try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
             ps.setString(1, order.getEnd());
             ps.setBoolean(2, order.isValid());
+            ps.setInt(3,order.getMessage_nums());
+            ps.setDouble(4,order.getCall_nums());
+            ps.setDouble(5,order.getFlow_nums());
+            ps.setBoolean(6,order.isNextMonthValid());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

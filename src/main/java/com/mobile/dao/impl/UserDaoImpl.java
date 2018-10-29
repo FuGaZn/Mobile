@@ -1,19 +1,22 @@
 package com.mobile.dao.impl;
 
+import com.mobile.dao.BillDao;
 import com.mobile.dao.OrderDao;
 import com.mobile.dao.UserDao;
+import com.mobile.domain.Bill;
 import com.mobile.domain.Order;
 import com.mobile.domain.User;
-import com.mobile.util.Bill;
+import com.mobile.util.BillExtend;
 import com.mobile.util.db.DBUtils;
-import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -66,14 +69,17 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public Bill monthBill(int uid, int month) {
+    public BillExtend monthBill(int uid, String year, int month) {
         UserDao userDao = new UserDaoImpl();
         OrderDao orderDao = new OrderDaoImpl();
+        BillDao billDao = new BillDaoImpl();
+        Bill bill = billDao.get(uid,year,month);
         User user = userDao.get(uid);
-        List<Order> orders = orderDao.myMonthOrders(uid, month);
-
-        Bill bill = new Bill(uid, user.getName(), orders, user.getExpense(), user.getBalance(), month);
-        return bill;
+        List<Order> orders = new ArrayList<>(orderDao.myMonthOrders(uid, month));
+        if(bill == null)
+            return null;
+        BillExtend billExtend = new BillExtend(uid, user.getName(), orders, bill.getExpense(), bill.getBalance(), month);
+        return billExtend;
     }
 
     @Override
@@ -102,7 +108,7 @@ public class UserDaoImpl implements UserDao {
         UserDao userDao = new UserDaoImpl();
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "insert into users(uid,uname,balance,location,phone) values(?,?,?,?,?)";
+        String sql = "insert into users(uid,uname,balance,location,phone,expense) values(?,?,?,?,?,0)";
         try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
@@ -123,12 +129,13 @@ public class UserDaoImpl implements UserDao {
     public void update(User user) {
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "update users set balance=? and expense=?;";
+        String sql = "update users set balance=?, expense=? where uid=?;";
         try {
             conn = DBUtils.getConnection();
             ps = conn.prepareStatement(sql);
             ps.setDouble(1, user.getBalance());
             ps.setDouble(2, user.getExpense());
+            ps.setInt(3,user.getId());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -191,10 +198,23 @@ public class UserDaoImpl implements UserDao {
             user.setBalance(user.getBalance() - timelen * price);
             user.setExpense(user.getExpense() + timelen * price);
             userDao.update(user);
+
+            SimpleDateFormat format1 = new SimpleDateFormat("yyyy");
+            BillDao billDao = new BillDaoImpl();
+            Bill bill = billDao.get(uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1);
+            if (bill == null) {
+                bill = new Bill(0, uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1, user.getBalance(), timelen*price);
+                billDao.add(bill);
+            }else {
+                bill.setBalance(user.getBalance());
+                bill.setExpense(bill.getExpense() + timelen*price);
+                billDao.update(bill);
+            }
+
             if (o != null)
-                System.out.println("超出套餐外时长：" + timelen + "分钟  根据 " + o.getPname() + " 套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen + "元。");
+                System.out.println("超出套餐外时长：" + timelen + "分钟  根据 " + o.getPname() + " 套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen + "元。账户余额"+user.getBalance()+"元。");
             else
-                System.out.println("超出套餐外时长：" + timelen + "分钟  无可用套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen + "元。");
+                System.out.println("超出套餐外时长：" + timelen + "分钟  无可用套餐，超出时长按照" + price + "元/分钟计费，共" + price * timelen  + "元。账户余额"+user.getBalance()+"元。");
             if (user.getBalance() < 0) {
                 System.out.println("您已欠费" + user.getBalance() + "元，保留接听业务。请尽快充值。");
             }
@@ -211,7 +231,7 @@ public class UserDaoImpl implements UserDao {
             for (Order order : orders) {
                 if (order.isValid() && order.getMessage_nums() > 0) {
                     order.setMessage_nums(order.getMessage_nums() - 1);
-                    System.out.println("使用套餐：" + order.getPname() + "  剩余短信条数：" + order.getCall_nums() + "条");
+                    System.out.println("使用套餐：" + order.getPname() + "  剩余短信条数：" + order.getMessage_nums() + "条");
                     orderDao.update(order);
                     b = true;
                     break;
@@ -236,6 +256,19 @@ public class UserDaoImpl implements UserDao {
             user.setBalance(user.getBalance() - price);
             user.setExpense(user.getExpense() + price);
             userDao.update(user);
+
+            SimpleDateFormat format1 = new SimpleDateFormat("yyyy");
+            BillDao billDao = new BillDaoImpl();
+            Bill bill = billDao.get(uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1);
+            if (bill == null) {
+                bill = new Bill(0, uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1, user.getBalance(), price);
+                billDao.add(bill);
+            }else {
+                bill.setBalance(user.getBalance());
+                bill.setExpense(bill.getExpense() + price);
+                billDao.update(bill);
+            }
+
             if (o != null)
                 System.out.println("超出套餐最多短信条数  根据 " + o.getPname() + " 套餐，超出短信按照" + price + "元/条计费，共" + price + "元");
             else
@@ -267,7 +300,7 @@ public class UserDaoImpl implements UserDao {
             for (Order order : orders) {
                 if (order.isValid() && (order.getLocation() == null || order.getLocation().equals(location)) && order.getFlow_nums() > 0 && nums > 0) {
                     double a = order.getFlow_nums() > nums ? nums : order.getCall_nums();
-                    order.setCall_nums(order.getCall_nums() - a);
+                    order.setFlow_nums(order.getFlow_nums() - a);
                     nums -= a;
                     orderDao.update(order);
                     System.out.println("使用套餐：" + order.getPname() + "  扣除流量：" + flowToString(a) + "  剩余流量：" + order.flowToString());
@@ -276,7 +309,7 @@ public class UserDaoImpl implements UserDao {
         }
         UserDao userDao = new UserDaoImpl();
         if (nums > 0) {
-            double price = 5;   //国内流量价格
+            double price = 0.5;   //国内流量价格
             User user = userDao.get(uid);
             Order o = null;
             if (orders != null) {
@@ -292,22 +325,35 @@ public class UserDaoImpl implements UserDao {
             }
             if (o == null) {
                 if (user.getLocation().equals(location)) {
-                    price = 3;  //本地流量价格
+                    price = 0.3;  //本地流量价格
                 }
             }
-            user.setBalance(new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-            user.setExpense(new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            double out = new BigDecimal(nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            user.setBalance(user.getBalance()-out);
+            user.setExpense(user.getExpense()+out);
+
+            SimpleDateFormat format1 = new SimpleDateFormat("yyyy");
+            BillDao billDao = new BillDaoImpl();
+            Bill bill = billDao.get(uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1);
+            if (bill == null) {
+                bill = new Bill(0, uid, format1.format(Calendar.getInstance().getTime()), Calendar.getInstance().get(Calendar.MONTH) + 1, user.getBalance(), out);
+                billDao.add(bill);
+            }else {
+                bill.setBalance(user.getBalance());
+                bill.setExpense(bill.getExpense() + out);
+                billDao.update(bill);
+            }
             userDao.update(user);
             if (o != null)
                 System.out.println("超出套餐可用流量  根据 " + o.getPname() + " 套餐，超出流量按照" + price + "元/M计费，共" +
-                        new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() + "元");
+                        out + "元");
             else {
-                if (price == 3) {
+                if (price == 0.3) {
                     System.out.println("超出套餐可用流量  无可用套餐，超出流量按照" + price + "元/M计费（本地流量），共" +
-                            new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP) + "元");
+                            out + "元");
                 } else
                     System.out.println("超出套餐可用流量  无可用套餐，超出流量按照" + price + "元/M计费（国内流量），共" +
-                            new BigDecimal(user.getBalance() - nums / 1024 * price).setScale(2, BigDecimal.ROUND_HALF_UP) + "元");
+                            out + "元");
             }
 
             if (user.getBalance() < 0) {

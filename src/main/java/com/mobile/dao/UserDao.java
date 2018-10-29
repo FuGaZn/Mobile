@@ -1,8 +1,7 @@
 package com.mobile.dao;
 
-import com.mobile.domain.Order;
 import com.mobile.domain.User;
-import com.mobile.util.Bill;
+import com.mobile.util.BillExtend;
 
 import java.util.List;
 
@@ -82,8 +81,9 @@ public interface UserDao {
      * 返回某客户某月的账单
      *
      * @param uid
+     * @param year
      * @param month
      * @return
      */
-    public Bill monthBill(int uid, int month);
+    public BillExtend monthBill(int uid, String year, int month);
 }
